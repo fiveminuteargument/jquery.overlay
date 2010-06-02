@@ -3,14 +3,6 @@
 	$.fn.extend({
 
 		overlay: function(options) {
-			var defaults = {
-				maxItems: 5,
-				duration: 1500,
-				animRatio: 5
-			};
-
-			var options = $.extend(defaults, options);
-
 			return this.each(function() {
 				$(this).hover(
 					function() {
@@ -32,7 +24,7 @@ function add_overlay(sel)
 {
 	var compStyle = document.defaultView.getComputedStyle($(sel)[0], null);
 
-	$(sel).css('position', 'relative');
+	$(sel).css({ position: 'relative' });
 
 
 	//
@@ -43,19 +35,15 @@ function add_overlay(sel)
 
 	var sides = [ 'left', 'top', 'right', 'bottom' ];
 	var props = {};
+	
+	var fs = parseInt($(sel).css('font-size'));
 
 	for (s in sides)
 	{
-		/*
-		var length = 0
-			- parseInt(compStyle.getPropertyValue('margin-' + sides[s]))
-			- parseInt(compStyle.getPropertyValue('border-' + sides[s] + '-width'));
-		*/
-
 		var length = 0 - parseInt($(sel).css('margin-' + sides[s]))
 			- parseInt($(sel).css('border-' + sides[s] + '-width'));
 
-		props[sides[s]] = length + 'px';
+		props[sides[s]] = (length / fs) + 'em';
 	}
 
 	$('.margin-overlay').css(props);
@@ -68,10 +56,10 @@ function add_overlay(sel)
 	$(sel).append('<div class="overlay border-overlay"></div>');
 
 	$('.border-overlay').css({
-		top:     0 - parseInt(compStyle.getPropertyValue('border-top-width')) + 'px',
-		right:   0 - parseInt(compStyle.getPropertyValue('border-right-width')) + 'px',
-		bottom:  0 - parseInt(compStyle.getPropertyValue('border-bottom-width')) + 'px',
-		left:    0 - parseInt(compStyle.getPropertyValue('border-left-width')) + 'px'
+		top:     (0 - parseInt(compStyle.getPropertyValue('border-top-width')) / fs) + 'em',
+		right:   (0 - parseInt(compStyle.getPropertyValue('border-right-width')) / fs) + 'em',
+		bottom:  (0 - parseInt(compStyle.getPropertyValue('border-bottom-width')) / fs) + 'em',
+		left:    (0 - parseInt(compStyle.getPropertyValue('border-left-width')) / fs) + 'em'
 	});
 
 
@@ -92,7 +80,7 @@ function add_overlay(sel)
 
 	for (s in sides)
 	{
-		props[sides[s]] = parseInt($(sel).css('padding-' + sides[s]));
+		props[sides[s]] = (parseInt($(sel).css('padding-' + sides[s])) / fs) + 'em';
 	}
 
 	$('.content-overlay').css(props);
