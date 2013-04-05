@@ -1,12 +1,15 @@
+// TODO Fails when one of [ margin, border ] uses absolute values and the other uses relative
+
 (function($){
 	$.fn.extend({
 
 		overlay: function(options) {
-			var defaults = {};
-
-			var options = $.extend(defaults, options);
+			var defaults = {},
+			    options = $.extend(defaults, options);
 
 			return this.each(function() {
+				// TODO Probably want to set this up once, then show/hide it
+				// on hover
 				$(this).hover(
 					function() {
 						$(this).add_overlay();
@@ -18,88 +21,66 @@
 				);
 			});
 		},
-		
+
 		add_overlay: function(options) {
-			var sides = [ 'left', 'top', 'right', 'bottom' ];
-
-			var defaults = { padding: true, margin: true, border: true, content: true };
-
-			var options = $.extend(defaults, options);
+			var sides    = [ 'left', 'top', 'right', 'bottom' ],
+			    defaults = { padding: true, margin: true, border: true, content: true };
+			    options  = $.extend(defaults, options);
 
 			return this.each(function() {
-				var compStyle = document.defaultView.getComputedStyle(this, null);
+				var compStyle = document.defaultView.getComputedStyle(this, null),
+				    $this     = $(this).css({ position: 'relative' }),
+				    props     = {},
+				    fs        = parseInt($this.css('font-size')),
+				    s,
+				    d,
+				    o,
+				    prop;
 
-				$(this).css({ position: 'relative' });
+				var propsToGet = {
+					content: [ 'padding' ],
+					margin:  [ 'margin', 'border' ],
+					border:  [ 'border' ]
+				};
 
-				var props = {};
-				var fs = parseInt($(this).css('font-size'));
+				var vals = {};
 
+				for (o in options) {
+					if (!options[o])
+						continue;
 
-				//
-				// Margin overlay should have negative margins identical to the element's margins
-				//
+					for (p in propsToGet[o]) {
+						for (s in sides) {
+							fullProp = propsToGet[o][p] + '-' + sides[s] + (propsToGet[o][p] == 'border' ? '-width' : '');
+							vals[fullProp] = [ parseInt($this.css(fullProp)) ];
+							$this.css('font-size', fs * 2);
+							vals[fullProp][1] = parseInt($this.css(fullProp));
+							$this.css('font-size', fs);
+						}
+					}
+				}
 
-				if (options.margin)
-				{
-					$(this).append('<div class="overlay margin-overlay"></div>');
+				for (d in defaults) {
+					if (!options[d])
+						continue;
 
-					for (s in sides)
-					{
-						var length = 0 - parseInt($(this).css('margin-' + sides[s]))
-							- parseInt($(this).css('border-' + sides[s] + '-width'));
+					if (d != 'padding') {
+						for (s in sides) {
+							prop = d == 'content' ? 'padding-' + sides[s]
+								: d + '-' + sides[s] + (d == 'border' ? '-width' : '');
 
-						props[sides[s]] = (length / fs) + 'em';
+							props[sides[s]] = d == 'content' ? vals[prop][0]
+								: d == 'margin' ? 0 - vals[prop][0] - vals['border-' + sides[s] + '-width'][0]
+								: d == 'border' ? 0 - vals[prop][0] : '';
+
+							props[sides[s]] = vals[prop][0] == vals[prop][1]
+								? props[sides[s]] + 'px'
+								: (props[sides[s]] / fs) + 'em';
+						}
 					}
 
-					$(this).find('.margin-overlay').css(props);
+					$('<div class="overlay ' + d + '-overlay"></div>').appendTo(this).css(props);
 				}
-
-
-				//
-				// Border overlay
-				//
-
-				if (options.border)
-				{
-					$(this).append('<div class="overlay border-overlay"></div>');
-
-					$(this).find('.border-overlay').css({
-						top:     (0 - parseInt(compStyle.getPropertyValue('border-top-width')) / fs) + 'em',
-						right:   (0 - parseInt(compStyle.getPropertyValue('border-right-width')) / fs) + 'em',
-						bottom:  (0 - parseInt(compStyle.getPropertyValue('border-bottom-width')) / fs) + 'em',
-						left:    (0 - parseInt(compStyle.getPropertyValue('border-left-width')) / fs) + 'em'
-					});
-				}
-
-
-				//
-				// Padding overlay is easy - it just sits inside the element
-				//
-
-				if (options.padding)
-				{
-					$(this).append('<div class="overlay padding-overlay"></div>');
-				}
-
-
-				//
-				// Content overlay
-				//
-
-				if (options.content)
-				{
-					$(this).append('<div class="overlay content-overlay"></div>');
-
-					props = {};
-
-					for (s in sides)
-					{
-						props[sides[s]] = (parseInt($(this).css('padding-' + sides[s])) / fs) + 'em';
-					}
-
-					$(this).find('.content-overlay').css(props);
-				}
-
 			});
 		}
 	});
